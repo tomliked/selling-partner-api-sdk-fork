@@ -61,6 +61,9 @@ class LWAClient
             throw new \RuntimeException('Request body could not be encoded');
         }
 
+        $cacheKey = md5($requestBody);
+        error_log(sprintf('[LWA Endpoint] Fetching token for key: %s', $cacheKey));
+
         $contentHeader = [
             'Content-Type' => 'application/json',
         ];
@@ -76,10 +79,14 @@ class LWAClient
             }
 
             $accessToken = $responseJson['access_token'];
+            error_log(sprintf('[LWA Endpoint] Successfully fetched token for key: %s, expires in: %d seconds', $cacheKey, $responseJson['expires_in']));
 
             if (null !== $this->lwaAccessTokenCache) {
                 $timeToTokenExpire = (float) $responseJson['expires_in'];
                 $this->lwaAccessTokenCache->set($requestBody, $accessToken, $timeToTokenExpire);
+                error_log(sprintf('[LWA Endpoint] Token saved to cache for key: %s', $cacheKey));
+            } else {
+                error_log('[LWA Endpoint] Cache is null, token not saved');
             }
         } catch (BadResponseException $e) {
             // Catches 400 and 500 level error codes
