@@ -41,6 +41,8 @@ class LWAClient
         if (!$requestBody) {
             throw new \RuntimeException('Request body could not be encoded');
         }
+        $cacheKey = md5($requestBody);
+        error_log(sprintf('[LWA Cache] Looking for token with key: %s', $cacheKey));
         $accessTokenCacheData = $this->lwaAccessTokenCache->get($requestBody);
         if (null !== $accessTokenCacheData) {
             error_log('[LWA Cache] Token retrieved from cache');
