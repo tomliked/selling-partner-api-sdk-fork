@@ -34,6 +34,7 @@ use SpApi\ApiException;
 use PHPUnit\Framework\TestCase;
 use SpApi\Test\TestHelper;
 use SpApi\AuthAndAuth\LWAAuthorizationCredentials;
+use SpApi\AuthAndAuth\LWAAccessTokenCache;
 use Dotenv\Dotenv;
 
 $dotenv = Dotenv::createImmutable(dirname(__DIR__, 3));
@@ -51,6 +52,13 @@ class BaseTestCase extends TestCase
 {
     protected TestHelper $testHelper;
     protected Configuration $config;
+    
+    /**
+     * Shared token cache across all test cases to avoid LWA rate limiting
+     * @var LWAAccessTokenCache|null
+     */
+    private static ?LWAAccessTokenCache $sharedSpApiTokenCache = null;
+    private static ?LWAAccessTokenCache $sharedVendorApiTokenCache = null;
 
     protected function setUp(): void
     {
@@ -74,8 +82,21 @@ class BaseTestCase extends TestCase
             $credentialsConfig['scopes'] = $scopes;
         }
 
+        // Initialize shared token cache for SP-API or Vendor API
+        if ($isVendorApi) {
+            if (self::$sharedVendorApiTokenCache === null) {
+                self::$sharedVendorApiTokenCache = new LWAAccessTokenCache();
+            }
+            $tokenCache = self::$sharedVendorApiTokenCache;
+        } else {
+            if (self::$sharedSpApiTokenCache === null) {
+                self::$sharedSpApiTokenCache = new LWAAccessTokenCache();
+            }
+            $tokenCache = self::$sharedSpApiTokenCache;
+        }
+
         $lwaAuthorizationCredentials = new LWAAuthorizationCredentials($credentialsConfig);
-        $this->config = new Configuration([], $lwaAuthorizationCredentials);
+        $this->config = new Configuration([], $lwaAuthorizationCredentials, false, $tokenCache);
         $this->config->setHost($isVendorApi ? $_ENV['VENDOR_API_ENDPOINT_HOST'] : $_ENV['SP_API_ENDPOINT_HOST']);
     }
 
