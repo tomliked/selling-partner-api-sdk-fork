@@ -43,9 +43,11 @@ class LWAClient
         }
         $accessTokenCacheData = $this->lwaAccessTokenCache->get($requestBody);
         if (null !== $accessTokenCacheData) {
+            error_log('[LWA Cache] Token retrieved from cache');
             return $accessTokenCacheData;
         }
 
+        error_log('[LWA Cache] Token not in cache, fetching from endpoint');
         return $this->getAccessTokenFromEndpoint($lwaAccessTokenRequestMeta);
     }
 
@@ -79,7 +81,13 @@ class LWAClient
             }
         } catch (BadResponseException $e) {
             // Catches 400 and 500 level error codes
-            throw new \RuntimeException('Unsuccessful LWA token exchange', $e->getCode());
+            $errorBody = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : 'No response body';
+            $errorMessage = sprintf(
+                'Unsuccessful LWA token exchange. Status: %d, Response: %s',
+                $e->getCode(),
+                $errorBody
+            );
+            throw new \RuntimeException($errorMessage, $e->getCode());
         } catch (\Exception $e) {
             throw new \RuntimeException('Error getting LWA Access Token', $e->getCode());
         } catch (GuzzleException $e) {
