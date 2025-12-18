@@ -41,15 +41,11 @@ class LWAClient
         if (!$requestBody) {
             throw new \RuntimeException('Request body could not be encoded');
         }
-        $cacheKey = md5($requestBody);
-        echo sprintf("[LWA Cache] Looking for token with key: %s\n", $cacheKey);
         $accessTokenCacheData = $this->lwaAccessTokenCache->get($requestBody);
         if (null !== $accessTokenCacheData) {
-            echo "[LWA Cache] Token retrieved from cache\n";
             return $accessTokenCacheData;
         }
 
-        echo "[LWA Cache] Token not in cache, fetching from endpoint\n";
         return $this->getAccessTokenFromEndpoint($lwaAccessTokenRequestMeta);
     }
 
@@ -60,9 +56,6 @@ class LWAClient
         if (!$requestBody) {
             throw new \RuntimeException('Request body could not be encoded');
         }
-
-        $cacheKey = md5($requestBody);
-        echo sprintf("[LWA Endpoint] Fetching token for key: %s\n", $cacheKey);
 
         $contentHeader = [
             'Content-Type' => 'application/json',
@@ -79,24 +72,14 @@ class LWAClient
             }
 
             $accessToken = $responseJson['access_token'];
-            echo sprintf("[LWA Endpoint] Successfully fetched token for key: %s, expires in: %d seconds\n", $cacheKey, $responseJson['expires_in']);
 
             if (null !== $this->lwaAccessTokenCache) {
                 $timeToTokenExpire = (float) $responseJson['expires_in'];
                 $this->lwaAccessTokenCache->set($requestBody, $accessToken, $timeToTokenExpire);
-                echo sprintf("[LWA Endpoint] Token saved to cache for key: %s\n", $cacheKey);
-            } else {
-                echo "[LWA Endpoint] Cache is null, token not saved\n";
             }
         } catch (BadResponseException $e) {
             // Catches 400 and 500 level error codes
-            $errorBody = $e->getResponse() ? $e->getResponse()->getBody()->getContents() : 'No response body';
-            $errorMessage = sprintf(
-                'Unsuccessful LWA token exchange. Status: %d, Response: %s',
-                $e->getCode(),
-                $errorBody
-            );
-            throw new \RuntimeException($errorMessage, $e->getCode());
+            throw new \RuntimeException('Unsuccessful LWA token exchange', $e->getCode());
         } catch (\Exception $e) {
             throw new \RuntimeException('Error getting LWA Access Token', $e->getCode());
         } catch (GuzzleException $e) {

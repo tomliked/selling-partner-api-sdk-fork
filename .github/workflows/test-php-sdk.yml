@@ -48,8 +48,10 @@ jobs:
         working-directory: ./php/sdk
         run: |
           mkdir -p build/reports
-          set -o pipefail
-          vendor/bin/phpunit test/Api --testdox --log-junit build/reports/junit.xml --stderr 2>&1 | tee build/reports/test-output.log
+          if ! vendor/bin/phpunit test/Api --testdox --log-junit build/reports/junit.xml; then
+            echo "Tests failed"
+            exit 1
+          fi
 
       - name: Archive reports
         if: always()
@@ -57,10 +59,3 @@ jobs:
         with:
           name: php-test-reports
           path: php/sdk/build/reports
-      
-      - name: Display LWA cache logs
-        if: always()
-        working-directory: ./php/sdk
-        run: |
-          echo "=== LWA Cache Logs ==="
-          grep -E "\[LWA (Cache|Endpoint)\]" build/reports/test-output.log | head -100 || echo "No LWA logs found"
