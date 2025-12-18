@@ -48,10 +48,8 @@ jobs:
         working-directory: ./php/sdk
         run: |
           mkdir -p build/reports
-          if ! vendor/bin/phpunit test/Api --testdox --log-junit build/reports/junit.xml --stderr 2>&1 | tee build/reports/test-output.log; then
-            echo "Tests failed"
-            exit 1
-          fi
+          set -o pipefail
+          vendor/bin/phpunit test/Api --testdox --log-junit build/reports/junit.xml --stderr 2>&1 | tee build/reports/test-output.log
 
       - name: Archive reports
         if: always()
