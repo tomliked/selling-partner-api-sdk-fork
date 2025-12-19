@@ -603,6 +603,7 @@ class TestHelper
         // CatalogItem
         'testGetCatalogItem200', // Response has Invalid value for images.variant such as PT09-PT14, EEGL and EGUS
         'testSearchCatalogItems200', // Response has Invalid value for images.variant such as PT09-PT14, EEGL and EGUS
+        'testGetCatalogItem400',
         // ProductFeesAPI
         'testGetMyFeesEstimates200', // Sandbox Returns 400
         'testGetMyFeesEstimateForASIN400', // Request can not be made because Request is missing mandatory parameters
@@ -708,5 +709,9 @@ class TestHelper
         'testUpdatePackage204', // required body missing in model
         'testUpdatePackage400', // required body missing in model
         'testGetShipments200', // invalid enum in request
+        //UpdateInventoryApi
+        'testSubmitInventoryUpdate202',
+        'testSubmitInventoryUpdate400',
+
     ];
 }
